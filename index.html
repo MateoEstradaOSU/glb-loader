@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLB File Upload Loader</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        .controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .movement-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .movement-controls button {
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #333;
+            background: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        
+        .movement-controls button:hover {
+            background: #f0f0f0;
+        }
+        
+        .movement-controls button:active {
+            background: #ddd;
+        }
+        
+        #scoop-up-btn, #scoop-down-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: 2px solid #333;
+            background: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        
+        #scoop-up-btn:hover, #scoop-down-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        #file-upload {
+            padding: 8px;
+            font-size: 14px;
+            border: 2px solid #333;
+            background: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        .drag-info {
+            background: #e6f3ff;
+            border: 1px solid #0066cc;
+            border-radius: 5px;
+            padding: 8px;
+            font-size: 12px;
+            margin-bottom: 10px;
+            color: #0066cc;
+        }
+        
+        .dragging-cursor {
+            cursor: grabbing !important;
+        }
+        
+        .grabbable-cursor {
+            cursor: grab !important;
+        }
+        
+        .collapsible-panel {
+            background: #f0f0f0;
+            border: 2px solid #333;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            background: #e0e0e0;
+            cursor: pointer;
+            border-radius: 3px 3px 0 0;
+            border-bottom: 1px solid #333;
+        }
+        
+        .panel-header:hover {
+            background: #d0d0d0;
+        }
+        
+        .panel-title {
+            margin: 0;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .collapse-btn {
+            padding: 2px 6px;
+            font-size: 12px;
+            border: 1px solid #333;
+            background: #fff;
+            cursor: pointer;
+            border-radius: 3px;
+            min-width: 20px;
+        }
+        
+        .panel-content {
+            padding: 10px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .panel-content.collapsed {
+            max-height: 0;
+            padding: 0 10px;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <!-- Master Control Panel -->
+        <div class="collapsible-panel" style="background: #e6f3ff; border-color: #0066cc;">
+            <div class="panel-header" style="background: #cce6ff;">
+                <h4 class="panel-title">🎛️ Master Controls</h4>
+                <div style="display: flex; gap: 5px;">
+                    <button class="collapse-btn" onclick="collapseAll()" title="Collapse All">📁</button>
+                    <button class="collapse-btn" onclick="expandAll()" title="Expand All">📂</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Movement Controls Panel -->
+        <div class="collapsible-panel">
+            <div class="panel-header" onclick="togglePanel('movement-panel')">
+                <h4 class="panel-title">🎮 Movement Controls</h4>
+                <button class="collapse-btn" id="movement-collapse-btn">−</button>
+            </div>
+            <div class="panel-content" id="movement-panel">
+                <div class="movement-controls">
+                    <div></div>
+                    <button id="forward-btn">↑</button>
+                    <div></div>
+                    <button id="left-btn">←</button>
+                    <button id="stop-btn">⏹</button>
+                    <button id="right-btn">→</button>
+                    <div></div>
+                    <button id="backward-btn">↓</button>
+                    <div></div>
+                </div>
+                <div style="display: flex; gap: 8px; margin-bottom: 10px; justify-content: center;">
+                    <button id="scale-up-btn" style="padding: 6px 12px; font-size: 13px; border: 2px solid #333; background: #e0ffe0; cursor: pointer; border-radius: 5px;">Scale Up +</button>
+                    <button id="scale-down-btn" style="padding: 6px 12px; font-size: 13px; border: 2px solid #333; background: #ffe0e0; cursor: pointer; border-radius: 5px;">Scale Down −</button>
+                    <button id="toggle-axis-btn" style="padding: 6px 12px; font-size: 13px; border: 2px solid #333; background: #e0e0ff; cursor: pointer; border-radius: 5px;">Hide Axis</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- File Management Panel -->
+        <div class="collapsible-panel">
+            <div class="panel-header" onclick="togglePanel('file-panel')">
+                <h4 class="panel-title">📁 File Management</h4>
+                <button class="collapse-btn" id="file-collapse-btn">−</button>
+            </div>
+            <div class="panel-content" id="file-panel">
+                <h5 class="panel-title">Model (.glb file)</h5>
+                <input type="file" id="file-upload" accept=".glb" style="margin-bottom: 10px;">
+                <button id="add-file-btn" style="padding: 8px 16px; font-size: 14px; border: 2px solid #333; background: #fff; cursor: pointer; border-radius: 5px; margin-bottom: 10px; width: 100%;">Add Another Model</button>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                    <label style="font-size: 12px; font-weight: bold;">🌟 Shadows:</label>
+                    <button id="toggle-shadows-btn" style="padding: 4px 8px; font-size: 12px; border: 1px solid #333; background: #90EE90; cursor: pointer; border-radius: 3px;">ON</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lighting Controls Panel -->
+        <div class="collapsible-panel">
+            <div class="panel-header" onclick="togglePanel('lighting-panel')">
+                <h4 class="panel-title">💡 Lighting Controls</h4>
+                <button class="collapse-btn" id="lighting-collapse-btn">−</button>
+            </div>
+            <div class="panel-content" id="lighting-panel">
+                <div style="margin-bottom: 8px;">
+                    <label style="font-size: 11px; font-weight: bold; display: block; margin-bottom: 2px;">Light X Position:</label>
+                    <input type="range" id="light-x-slider" min="-20" max="20" value="5" step="0.5" style="width: 100%; margin-bottom: 2px;">
+                    <span id="light-x-value" style="font-size: 10px; color: #666;">5.0</span>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <label style="font-size: 11px; font-weight: bold; display: block; margin-bottom: 2px;">Light Y Position:</label>
+                    <input type="range" id="light-y-slider" min="1" max="30" value="10" step="0.5" style="width: 100%; margin-bottom: 2px;">
+                    <span id="light-y-value" style="font-size: 10px; color: #666;">10.0</span>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <label style="font-size: 11px; font-weight: bold; display: block; margin-bottom: 2px;">Light Z Position:</label>
+                    <input type="range" id="light-z-slider" min="-20" max="20" value="5" step="0.5" style="width: 100%; margin-bottom: 2px;">
+                    <span id="light-z-value" style="font-size: 10px; color: #666;">5.0</span>
+                </div>
+                <button id="reset-light-btn" style="padding: 4px 8px; font-size: 11px; border: 1px solid #333; background: #f0f0f0; cursor: pointer; border-radius: 3px; width: 100%; margin-bottom: 5px;">Reset to Default</button>
+                <button id="toggle-light-sphere-btn" style="padding: 4px 8px; font-size: 11px; border: 1px solid #333; background: #ffff99; cursor: pointer; border-radius: 3px; width: 100%;">Hide Light Sphere</button>
+            </div>
+        </div>
+
+        <!-- Help & Tips Panel -->
+        <div class="collapsible-panel">
+            <div class="panel-header" onclick="togglePanel('help-panel')">
+                <h4 class="panel-title">💡 Help & Tips</h4>
+                <button class="collapse-btn" id="help-collapse-btn">−</button>
+            </div>
+            <div class="panel-content" id="help-panel">
+                <div class="drag-info">
+                    💡 <strong>Tip:</strong> Click and drag any model to move it around! The selected model will be highlighted in the model list.
+                </div>
+                <div class="drag-info" style="background: #f0f8e6; border-color: #66aa00; color: #556600;">
+                    ⌨️ <strong>Keyboard Shortcuts:</strong><br>
+                    • Tab: Switch between models<br>
+                    • 1-9: Select model by number<br>
+                    • Esc: Stop dragging/movement<br>
+                    • L: Toggle light sphere visibility
+                </div>
+                <div class="drag-info" style="background: #fff0e6; border-color: #ff9900; color: #cc6600;">
+                    🌟 <strong>Lighting & Shadows:</strong><br>
+                    • Enhanced directional & ambient lighting<br>
+                    • Real-time shadow casting enabled<br>
+                    • Toggle shadows on/off in File Management<br>
+                    • Adjust light position with sliders<br>
+                    • Yellow sphere shows light location
+                </div>
+            </div>
+        </div>
+
+        <!-- Model List Panel -->
+        <div id="model-list" class="collapsible-panel" style="display: none;">
+            <div class="panel-header" onclick="togglePanel('models-content')">
+                <h4 class="panel-title">📦 Loaded Models</h4>
+                <button class="collapse-btn" id="models-collapse-btn">−</button>
+            </div>
+            <div class="panel-content" id="models-content"></div>
+        </div>
+
+        <!-- Node List Panel -->
+        <div id="node-list" class="collapsible-panel" style="max-height: 300px; overflow-y: auto; display: none;">
+            <div class="panel-header" onclick="togglePanel('nodes-content')">
+                <h4 class="panel-title">🔗 Model Nodes</h4>
+                <button class="collapse-btn" id="collapse-btn">−</button>
+            </div>
+            <div class="panel-content" id="nodes-content"></div>
+        </div>
+    </div>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js",
+      "three/examples/jsm/loaders/GLTFLoader.js": "https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/loaders/GLTFLoader.js",
+      "three/examples/jsm/controls/OrbitControls.js": "https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/controls/OrbitControls.js"
+    }
+  }
+  </script>
+  <script>
+    // Global function for collapsible panels with smooth transitions
+    function togglePanel(panelId) {
+        const panel = document.getElementById(panelId);
+        const button = document.querySelector(`[onclick="togglePanel('${panelId}')"] .collapse-btn`);
+        
+        if (panel.style.display === 'none' || panel.classList.contains('collapsed')) {
+            // Expand
+            panel.style.display = 'block';
+            panel.classList.remove('collapsed');
+            button.textContent = '−';
+        } else {
+            // Collapse
+            panel.classList.add('collapsed');
+            button.textContent = '+';
+            // Hide completely after animation
+            setTimeout(() => {
+                if (panel.classList.contains('collapsed')) {
+                    panel.style.display = 'none';
+                }
+            }, 300);
+        }
+    }
+    
+    // Collapse all panels
+    function collapseAll() {
+        const panels = ['movement-panel', 'file-panel', 'lighting-panel', 'help-panel', 'models-content', 'nodes-content'];
+        panels.forEach(panelId => {
+            const panel = document.getElementById(panelId);
+            const button = document.querySelector(`[onclick="togglePanel('${panelId}')"] .collapse-btn`);
+            if (panel && button) {
+                panel.classList.add('collapsed');
+                button.textContent = '+';
+                setTimeout(() => {
+                    if (panel.classList.contains('collapsed')) {
+                        panel.style.display = 'none';
+                    }
+                }, 300);
+            }
+        });
+    }
+    
+    // Expand all panels
+    function expandAll() {
+        const panels = ['movement-panel', 'file-panel', 'lighting-panel', 'help-panel', 'models-content', 'nodes-content'];
+        panels.forEach(panelId => {
+            const panel = document.getElementById(panelId);
+            const button = document.querySelector(`[onclick="togglePanel('${panelId}')"] .collapse-btn`);
+            if (panel && button && panel.parentElement.style.display !== 'none') {
+                panel.style.display = 'block';
+                panel.classList.remove('collapsed');
+                button.textContent = '−';
+            }
+        });
+    }
+  </script>
+  <script type="module" src="main.js"></script>
+</body>
+</html>
