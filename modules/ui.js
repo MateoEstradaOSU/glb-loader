@@ -30,6 +30,7 @@ export class UIManager {
         this.setupGroundTextureControl();
         this.setupScaleControls();
         this.setupAxisToggleControl();
+        this.setupRotateControls();
     }
     
     setupMovementControls() {
@@ -197,6 +198,21 @@ export class UIManager {
             if (window.sceneManager && !window.sceneManager.isAxisVisible()) {
                 axisBtn.textContent = 'Show Axis';
             }
+        }
+    }
+    
+    setupRotateControls() {
+        const rotateLeftBtn = document.getElementById('rotate-left-btn');
+        const rotateRightBtn = document.getElementById('rotate-right-btn');
+        if (rotateLeftBtn) {
+            rotateLeftBtn.addEventListener('click', () => {
+                this.modelManager.rotateCurrentModel(-Math.PI / 12); // Rotate left by 15 degrees
+            });
+        }
+        if (rotateRightBtn) {
+            rotateRightBtn.addEventListener('click', () => {
+                this.modelManager.rotateCurrentModel(Math.PI / 12); // Rotate right by 15 degrees
+            });
         }
     }
     

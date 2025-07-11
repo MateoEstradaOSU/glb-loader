@@ -436,4 +436,12 @@ export class ModelManager {
             this.currentModel.scale.set(newScale, newScale, newScale);
         }
     }
+
+    // New method to rotate the current model
+    rotateCurrentModel(angle) {
+        if (this.currentModel) {
+            // Rotate around Y axis (vertical)
+            this.currentModel.rotation.y += angle;
+        }
+    }
 }
