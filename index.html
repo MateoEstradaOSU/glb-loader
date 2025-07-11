@@ -135,10 +135,129 @@
             padding: 0 10px;
             opacity: 0;
         }
+        
+        #movement-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            background: #e6f3ff;
+            border-bottom: 2px solid #0066cc;
+            z-index: 200;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            padding: 10px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        #lighting-bar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            width: 320px;
+            background: #fffbe6;
+            border-left: 2px solid #ffd700;
+            z-index: 201;
+            box-shadow: -2px 2px 8px rgba(0,0,0,0.04);
+            border-radius: 0 0 0 12px;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            align-items: stretch;
+            justify-content: flex-start;
+        }
+
+        #lighting-bar.collapsed {
+            width: 48px;
+            min-width: 48px;
+            max-width: 48px;
+            padding: 0;
+            align-items: flex-end;
+        }
+        #lighting-bar.collapsed .panel-header {
+            display: none !important;
+        }
+        #lighting-bar.collapsed .panel-content {
+            display: none !important;
+        }
+        #lighting-bar .expand-lighting-btn {
+            display: none;
+        }
+        #lighting-bar.collapsed .expand-lighting-btn {
+            display: block !important;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 202;
+            background: #fffbe6;
+            border: 1px solid #ffd700;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            font-size: 20px;
+            color: #bfa100;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        @media (max-width: 700px) {
+            #lighting-bar { width: 100vw; left: 0; right: 0; top: 60px; height: auto; border-radius: 0; }
+        }
     </style>
 </head>
 <body>
-    <div class="controls">
+    <div id="movement-bar" style="position: fixed; top: 0; left: 0; width: 100vw; background: #e6f3ff; border-bottom: 2px solid #0066cc; z-index: 200; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 18px; padding: 10px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button id="left-btn" title="Move Left" style="padding: 10px 16px; font-size: 18px; border: 2px solid #333; background: #fff; cursor: pointer; border-radius: 5px;">←</button>
+            <button id="forward-btn" title="Move Forward" style="padding: 10px 16px; font-size: 18px; border: 2px solid #333; background: #fff; cursor: pointer; border-radius: 5px;">↑</button>
+            <button id="stop-btn" title="Stop" style="padding: 10px 16px; font-size: 18px; border: 2px solid #333; background: #fff; cursor: pointer; border-radius: 5px;">⏹</button>
+            <button id="backward-btn" title="Move Backward" style="padding: 10px 16px; font-size: 18px; border: 2px solid #333; background: #fff; cursor: pointer; border-radius: 5px;">↓</button>
+            <button id="right-btn" title="Move Right" style="padding: 10px 16px; font-size: 18px; border: 2px solid #333; background: #fff; cursor: pointer; border-radius: 5px;">→</button>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; margin-left: 24px;">
+            <button id="scale-up-btn" style="padding: 8px 14px; font-size: 15px; border: 2px solid #333; background: #e0ffe0; cursor: pointer; border-radius: 5px;">Scale +</button>
+            <button id="scale-down-btn" style="padding: 8px 14px; font-size: 15px; border: 2px solid #333; background: #ffe0e0; cursor: pointer; border-radius: 5px;">Scale −</button>
+            <button id="rotate-left-btn" style="padding: 8px 14px; font-size: 15px; border: 2px solid #333; background: #e0f7ff; cursor: pointer; border-radius: 5px;">⟲</button>
+            <button id="rotate-right-btn" style="padding: 8px 14px; font-size: 15px; border: 2px solid #333; background: #ffe0f7; cursor: pointer; border-radius: 5px;">⟳</button>
+            <button id="toggle-axis-btn" style="padding: 8px 14px; font-size: 15px; border: 2px solid #333; background: #e0e0ff; cursor: pointer; border-radius: 5px;">Hide Axis</button>
+        </div>
+    </div>
+    <div id="lighting-bar" class="collapsible-panel" style="position: fixed; top: 0; right: 0; height: 100vh; width: 320px; background: #fffbe6; border-left: 2px solid #ffd700; z-index: 201; box-shadow: -2px 2px 8px rgba(0,0,0,0.04); border-radius: 0 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 0; align-items: stretch; justify-content: flex-start;">
+        <div class="panel-header" style="background: #fff7c2; border-radius: 0 0 0 0; border-bottom: 1px solid #ffd700; padding: 10px 18px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: bold; font-size: 15px; color: #bfa100; letter-spacing: 0.5px;">💡 Lighting Controls</span>
+            <button class="collapse-btn" id="lighting-bar-collapse-btn" style="margin-left: 10px;">−</button>
+        </div>
+        <button class="expand-lighting-btn" id="expand-lighting-btn" title="Show Lighting Controls" style="display: none;">💡</button>
+        <div class="panel-content" id="lighting-bar-content" style="padding: 16px 18px 18px 18px; display: flex; flex-direction: column; gap: 10px; align-items: stretch;">
+            <div style="margin-bottom: 2px;">
+                <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 2px;">Light X Position:</label>
+                <input type="range" id="light-x-slider" min="-20" max="20" value="5" step="0.5" style="width: 100%; margin-bottom: 2px;">
+                <span id="light-x-value" style="font-size: 11px; color: #666;">5.0</span>
+            </div>
+            <div style="margin-bottom: 2px;">
+                <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 2px;">Light Y Position:</label>
+                <input type="range" id="light-y-slider" min="1" max="30" value="10" step="0.5" style="width: 100%; margin-bottom: 2px;">
+                <span id="light-y-value" style="font-size: 11px; color: #666;">10.0</span>
+            </div>
+            <div style="margin-bottom: 2px;">
+                <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 2px;">Light Z Position:</label>
+                <input type="range" id="light-z-slider" min="-20" max="20" value="5" step="0.5" style="width: 100%; margin-bottom: 2px;">
+                <span id="light-z-value" style="font-size: 11px; color: #666;">5.0</span>
+            </div>
+            <button id="reset-light-btn" style="padding: 5px 10px; font-size: 12px; border: 1px solid #bfa100; background: #fffde4; cursor: pointer; border-radius: 4px; width: 100%; margin-bottom: 2px;">Reset to Default</button>
+            <button id="toggle-light-sphere-btn" style="padding: 5px 10px; font-size: 12px; border: 1px solid #bfa100; background: #ffff99; cursor: pointer; border-radius: 4px; width: 100%;">Hide Light Sphere</button>
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
+                <label style="font-size: 12px; font-weight: bold;">🌟 Shadows:</label>
+                <button id="toggle-shadows-btn" style="padding: 4px 8px; font-size: 12px; border: 1px solid #333; background: #90EE90; cursor: pointer; border-radius: 3px;">ON</button>
+            </div>
+        </div>
+    </div>
+    <div class="controls" style="margin-top: 70px;">
         <!-- Master Control Panel -->
         <div class="collapsible-panel" style="background: #e6f3ff; border-color: #0066cc;">
             <div class="panel-header" style="background: #cce6ff;">
@@ -146,36 +265,6 @@
                 <div style="display: flex; gap: 5px;">
                     <button class="collapse-btn" onclick="collapseAll()" title="Collapse All">📁</button>
                     <button class="collapse-btn" onclick="expandAll()" title="Expand All">📂</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Movement Controls Panel -->
-        <div class="collapsible-panel">
-            <div class="panel-header" onclick="togglePanel('movement-panel')">
-                <h4 class="panel-title">🎮 Movement Controls</h4>
-                <button class="collapse-btn" id="movement-collapse-btn">−</button>
-            </div>
-            <div class="panel-content" id="movement-panel">
-                <div class="movement-controls">
-                    <div></div>
-                    <button id="forward-btn">↑</button>
-                    <div></div>
-                    <button id="left-btn">←</button>
-                    <button id="stop-btn">⏹</button>
-                    <button id="right-btn">→</button>
-                    <div></div>
-                    <button id="backward-btn">↓</button>
-                    <div></div>
-                </div>
-                <div style="display: flex; gap: 8px; margin-bottom: 10px; justify-content: center;">
-                    <button id="scale-up-btn" style="padding: 6px 12px; font-size: 13px; border: 2px solid #333; background: #e0ffe0; cursor: pointer; border-radius: 5px;">Scale Up +</button>
-                    <button id="scale-down-btn" style="padding: 6px 12px; font-size: 13px; border: 2px solid #333; background: #ffe0e0; cursor: pointer; border-radius: 5px;">Scale Down −</button>
-                    <button id="toggle-axis-btn" style="padding: 6px 12px; font-size: 13px; border: 2px solid #333; background: #e0e0ff; cursor: pointer; border-radius: 5px;">Hide Axis</button>
-                </div>
-                <div style="display: flex; gap: 8px; margin-bottom: 10px; justify-content: center;">
-                    <button id="rotate-left-btn" style="padding: 6px 12px; font-size: 13px; border: 2px solid #333; background: #e0f7ff; cursor: pointer; border-radius: 5px;">⟲ Rotate Left</button>
-                    <button id="rotate-right-btn" style="padding: 6px 12px; font-size: 13px; border: 2px solid #333; background: #ffe0f7; cursor: pointer; border-radius: 5px;">⟳ Rotate Right</button>
                 </div>
             </div>
         </div>
@@ -190,41 +279,28 @@
                 <h5 class="panel-title">Model (.glb file)</h5>
                 <input type="file" id="file-upload" accept=".glb" style="margin-bottom: 10px;">
                 <button id="add-file-btn" style="padding: 8px 16px; font-size: 14px; border: 2px solid #333; background: #fff; cursor: pointer; border-radius: 5px; margin-bottom: 10px; width: 100%;">Add Another Model</button>
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                    <label style="font-size: 12px; font-weight: bold;">🌟 Shadows:</label>
-                    <button id="toggle-shadows-btn" style="padding: 4px 8px; font-size: 12px; border: 1px solid #333; background: #90EE90; cursor: pointer; border-radius: 3px;">ON</button>
-                </div>
             </div>
         </div>
 
-        <!-- Lighting Controls Panel -->
-        <div class="collapsible-panel">
-            <div class="panel-header" onclick="togglePanel('lighting-panel')">
-                <h4 class="panel-title">💡 Lighting Controls</h4>
-                <button class="collapse-btn" id="lighting-collapse-btn">−</button>
+        <!-- Model List Panel -->
+        <div id="model-list" class="collapsible-panel" style="display: none;">
+            <div class="panel-header" onclick="togglePanel('models-content')">
+                <h4 class="panel-title">📦 Loaded Models</h4>
+                <button class="collapse-btn" id="models-collapse-btn">−</button>
             </div>
-            <div class="panel-content" id="lighting-panel">
-                <div style="margin-bottom: 8px;">
-                    <label style="font-size: 11px; font-weight: bold; display: block; margin-bottom: 2px;">Light X Position:</label>
-                    <input type="range" id="light-x-slider" min="-20" max="20" value="5" step="0.5" style="width: 100%; margin-bottom: 2px;">
-                    <span id="light-x-value" style="font-size: 10px; color: #666;">5.0</span>
-                </div>
-                <div style="margin-bottom: 8px;">
-                    <label style="font-size: 11px; font-weight: bold; display: block; margin-bottom: 2px;">Light Y Position:</label>
-                    <input type="range" id="light-y-slider" min="1" max="30" value="10" step="0.5" style="width: 100%; margin-bottom: 2px;">
-                    <span id="light-y-value" style="font-size: 10px; color: #666;">10.0</span>
-                </div>
-                <div style="margin-bottom: 8px;">
-                    <label style="font-size: 11px; font-weight: bold; display: block; margin-bottom: 2px;">Light Z Position:</label>
-                    <input type="range" id="light-z-slider" min="-20" max="20" value="5" step="0.5" style="width: 100%; margin-bottom: 2px;">
-                    <span id="light-z-value" style="font-size: 10px; color: #666;">5.0</span>
-                </div>
-                <button id="reset-light-btn" style="padding: 4px 8px; font-size: 11px; border: 1px solid #333; background: #f0f0f0; cursor: pointer; border-radius: 3px; width: 100%; margin-bottom: 5px;">Reset to Default</button>
-                <button id="toggle-light-sphere-btn" style="padding: 4px 8px; font-size: 11px; border: 1px solid #333; background: #ffff99; cursor: pointer; border-radius: 3px; width: 100%;">Hide Light Sphere</button>
-            </div>
+            <div class="panel-content" id="models-content"></div>
         </div>
 
-        <!-- Help & Tips Panel -->
+        <!-- Node List Panel -->
+        <div id="node-list" class="collapsible-panel" style="max-height: 300px; overflow-y: auto; display: none;">
+            <div class="panel-header" onclick="togglePanel('nodes-content')">
+                <h4 class="panel-title">🔗 Model Nodes</h4>
+                <button class="collapse-btn" id="collapse-btn">−</button>
+            </div>
+            <div class="panel-content" id="nodes-content"></div>
+        </div>
+
+         <!-- Help & Tips Panel -->
         <div class="collapsible-panel">
             <div class="panel-header" onclick="togglePanel('help-panel')">
                 <h4 class="panel-title">💡 Help & Tips</h4>
@@ -250,24 +326,6 @@
                     • Yellow sphere shows light location
                 </div>
             </div>
-        </div>
-
-        <!-- Model List Panel -->
-        <div id="model-list" class="collapsible-panel" style="display: none;">
-            <div class="panel-header" onclick="togglePanel('models-content')">
-                <h4 class="panel-title">📦 Loaded Models</h4>
-                <button class="collapse-btn" id="models-collapse-btn">−</button>
-            </div>
-            <div class="panel-content" id="models-content"></div>
-        </div>
-
-        <!-- Node List Panel -->
-        <div id="node-list" class="collapsible-panel" style="max-height: 300px; overflow-y: auto; display: none;">
-            <div class="panel-header" onclick="togglePanel('nodes-content')">
-                <h4 class="panel-title">🔗 Model Nodes</h4>
-                <button class="collapse-btn" id="collapse-btn">−</button>
-            </div>
-            <div class="panel-content" id="nodes-content"></div>
         </div>
     </div>
   <script type="importmap">
@@ -334,6 +392,26 @@
             }
         });
     }
+
+    // Collapsible Lighting Bar
+    document.addEventListener('DOMContentLoaded', function() {
+        const lightingBar = document.getElementById('lighting-bar');
+        const collapseBtn = document.getElementById('lighting-bar-collapse-btn');
+        const expandBtn = document.getElementById('expand-lighting-btn');
+        const content = document.getElementById('lighting-bar-content');
+        if (collapseBtn && content && lightingBar && expandBtn) {
+            collapseBtn.addEventListener('click', function() {
+                lightingBar.classList.add('collapsed');
+                content.classList.add('collapsed');
+                expandBtn.style.display = 'block';
+            });
+            expandBtn.addEventListener('click', function() {
+                lightingBar.classList.remove('collapsed');
+                content.classList.remove('collapsed');
+                expandBtn.style.display = 'none';
+            });
+        }
+    });
   </script>
   <script type="module" src="main.js"></script>
 </body>
