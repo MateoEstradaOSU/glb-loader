@@ -6,7 +6,12 @@ export class UtilsManager {
         this.sceneManager = sceneManager;
         this.scene = sceneManager.scene;
         
-        this.nodePointerSprite = null;
+        // Remove pointer sprite logic
+        // this.nodePointerSprite = null;
+
+        // Track selected node and its original material(s)
+        this.selectedNode = null;
+        this.originalMaterials = null;
         
         this.init();
     }
@@ -41,68 +46,6 @@ export class UtilsManager {
         return sprite;
     }
     
-    createPointerSprite() {
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.width = 64;
-        canvas.height = 64;
-        
-        // Draw an arrow pointing to the right
-        context.fillStyle = '#ff0000';
-        context.beginPath();
-        context.moveTo(10, 32);
-        context.lineTo(40, 20);
-        context.lineTo(40, 26);
-        context.lineTo(54, 26);
-        context.lineTo(54, 38);
-        context.lineTo(40, 38);
-        context.lineTo(40, 44);
-        context.closePath();
-        context.fill();
-        
-        // Add a border
-        context.strokeStyle = '#000000';
-        context.lineWidth = 2;
-        context.stroke();
-        
-        const texture = new THREE.CanvasTexture(canvas);
-        const material = new THREE.SpriteMaterial({ map: texture });
-        const sprite = new THREE.Sprite(material);
-        sprite.scale.set(1, 1, 1);
-        
-        return sprite;
-    }
-    
-    pointToNode(nodeObject) {
-        // Remove existing pointer if it exists
-        if (this.nodePointerSprite) {
-            this.scene.remove(this.nodePointerSprite);
-        }
-        
-        // Create new pointer sprite
-        this.nodePointerSprite = this.createPointerSprite();
-        
-        // Get the world position of the node
-        const worldPosition = new THREE.Vector3();
-        nodeObject.getWorldPosition(worldPosition);
-        
-        // Position the sprite slightly offset from the node
-        this.nodePointerSprite.position.copy(worldPosition);
-        this.nodePointerSprite.position.x += 2; // Offset to the right
-        this.nodePointerSprite.position.y += 1; // Offset upward
-        
-        // Add to scene
-        this.scene.add(this.nodePointerSprite);
-        
-        // Auto-remove after 5 seconds
-        setTimeout(() => {
-            if (this.nodePointerSprite) {
-                this.scene.remove(this.nodePointerSprite);
-                this.nodePointerSprite = null;
-            }
-        }, 5000);
-    }
-    
     discoverNodes(model) {
         const nodeList = document.getElementById('node-list');
         const nodesContent = document.getElementById('nodes-content');
@@ -126,7 +69,6 @@ export class UtilsManager {
                     children: object.children.length
                 });
             }
-            
             // Recursively check children
             object.children.forEach(child => traverse(child, depth + 1));
         };
@@ -154,14 +96,11 @@ export class UtilsManager {
                 
                 nodeDiv.innerHTML = `${info} ${details.length > 0 ? `[${details.join(', ')}]` : ''}`;
                 
-                // Add click handler to highlight the node
+                // Add click handler to highlight the node in red
                 nodeDiv.addEventListener('click', () => {
                     console.log('Selected node:', node.name, node.object);
-                    
-                    // Create pointer sprite pointing to the node
-                    this.pointToNode(node.object);
-                    
-                    // Highlight the clicked item
+                    this.highlightNode(node.object);
+                    // Highlight the clicked item in the list
                     nodeDiv.style.backgroundColor = '#ffff99';
                     setTimeout(() => {
                         nodeDiv.style.backgroundColor = '';
@@ -184,6 +123,51 @@ export class UtilsManager {
         } else {
             nodeList.style.display = 'none';
             console.log('No named nodes found in the model');
+        }
+    }
+
+    // Highlight the selected node in red, restore previous
+    highlightNode(nodeObject) {
+        // Restore previous node's material if any
+        if (this.selectedNode && this.originalMaterials) {
+            if (this.selectedNode.material && this.originalMaterials) {
+                if (Array.isArray(this.selectedNode.material)) {
+                    this.selectedNode.material.forEach((mat, i) => {
+                        if (this.originalMaterials[i]) {
+                            this.selectedNode.material[i].color.copy(this.originalMaterials[i].color);
+                            if (this.originalMaterials[i].emissive) {
+                                this.selectedNode.material[i].emissive.copy(this.originalMaterials[i].emissive);
+                            }
+                        }
+                    });
+                } else {
+                    this.selectedNode.material.color.copy(this.originalMaterials.color);
+                    if (this.originalMaterials.emissive) {
+                        this.selectedNode.material.emissive.copy(this.originalMaterials.emissive);
+                    }
+                }
+            }
+        }
+        // Store new selected node and its original material(s)
+        this.selectedNode = nodeObject;
+        if (nodeObject.material) {
+            if (Array.isArray(nodeObject.material)) {
+                this.originalMaterials = nodeObject.material.map(mat => ({
+                    color: mat.color.clone(),
+                    emissive: mat.emissive ? mat.emissive.clone() : null
+                }));
+                nodeObject.material.forEach(mat => {
+                    mat.color.set(0xff0000); // Red
+                    if (mat.emissive) mat.emissive.set(0x550000);
+                });
+            } else {
+                this.originalMaterials = {
+                    color: nodeObject.material.color.clone(),
+                    emissive: nodeObject.material.emissive ? nodeObject.material.emissive.clone() : null
+                };
+                nodeObject.material.color.set(0xff0000); // Red
+                if (nodeObject.material.emissive) nodeObject.material.emissive.set(0x550000);
+            }
         }
     }
     
